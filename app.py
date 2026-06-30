@@ -49,7 +49,7 @@ random.shuffle(choices)
 # 回答入力
 answer = st.radio("建築名を選んでください", choices, key="user_answer")
 
-if st.button("回答する"):
+if st.button("回答する", key="answer_button"):
     st.session_state.answer_submitted = True
 
 if st.session_state.answer_submitted:
