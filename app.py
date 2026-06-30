@@ -54,12 +54,7 @@ st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
 st.write(f"**特徴:** {q['特徴']}")
 
 # 選択肢の生成
-options = df_filtered["建築名"].unique().tolist()
-if len(options) < 2:
-    options = df["建築名"].unique().tolist()
-    
-choices = random.sample([o for o in options if o != q['建築名']], min(len(options)-1, 3)) + [q['建築名']]
-random.shuffle(choices)
+choices = st.session_state.choices
 
 # 回答入力
 answer = st.radio("建築名を選んでください", choices, key="user_answer")
