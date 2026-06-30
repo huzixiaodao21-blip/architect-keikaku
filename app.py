@@ -48,6 +48,9 @@ if 'question' not in st.session_state or st.sidebar.button("新しい問題"):
 q = st.session_state.question
 choices = st.session_state.choices # 保存した選択肢を読み出す
 
+# 現在Excelが認識している列名を画面に表示する
+st.write("Excelの列名一覧:", df.columns.tolist())
+
 # --- クイズ表示 ---
 st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？")
 st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
