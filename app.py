@@ -76,16 +76,19 @@ if st.session_state.answer_submitted:
         st.error(f"残念！正解は **{q['建築名']}** でした。")
 
     with st.expander("解説を見る"):
-        # q (その行のデータ) をすべて表示して確認
-        st.write("この行のデータ:", q.to_dict())
+        # データの中身を確認できたので、デバッグ用表示は消してOKです
+        # st.write("この行のデータ:", q.to_dict()) 
         
-        # 列名「画像」を厳密にチェック
+        # 1. Excelの「画像」列からURLを取得
         img_url = q.get("画像")
         
-        if pd.notna(img_url) and str(img_url).strip() != "":
+        # 2. URLが空でなく、かつURLっぽい文字列であれば画像を表示
+        if pd.notna(img_url) and str(img_url).startswith("http"):
             st.image(str(img_url), caption=q["建築名"], use_container_width=True)
         else:
-            st.warning("画像URLの列が空か、正しく認識されていません。")
+            # 画像がない行のための表示（あえて何も出さない、もしくは「画像なし」と出すなど）
+            st.info("この建築物には画像が設定されていません。")
+            
 
         st.write(f"**建築家:** {q['建築家']}")
         st.write(f"**解説:** {q['解説']}")
