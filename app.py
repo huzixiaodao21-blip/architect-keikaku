@@ -76,13 +76,16 @@ if st.session_state.answer_submitted:
         st.error(f"残念！正解は **{q['建築名']}** でした。")
 
     with st.expander("解説を見る"):
-        # デバッグ用：画像の中身を確認
-        # st.write(f"画像列のデータ: {q.get('画像')}") 
-
-        if "画像" in q and pd.notna(q["画像"]):
-            st.image(str(q["画像"]), caption=q["建築名"], use_container_width=True)
+        # q (その行のデータ) をすべて表示して確認
+        st.write("この行のデータ:", q.to_dict())
+        
+        # 列名「画像」を厳密にチェック
+        img_url = q.get("画像")
+        
+        if pd.notna(img_url) and str(img_url).strip() != "":
+            st.image(str(img_url), caption=q["建築名"], use_container_width=True)
         else:
-            st.warning("画像URLが正しく設定されていないか、見つかりません。")
+            st.warning("画像URLの列が空か、正しく認識されていません。")
 
         st.write(f"**建築家:** {q['建築家']}")
         st.write(f"**解説:** {q['解説']}")
