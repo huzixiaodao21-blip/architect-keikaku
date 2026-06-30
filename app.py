@@ -34,8 +34,19 @@ else:
 if 'question' not in st.session_state or st.sidebar.button("新しい問題"):
     st.session_state.question = df_filtered.sample(n=1).iloc[0]
     st.session_state.answer_submitted = False
+    
+    # 選択肢をここで一度だけ生成して保存する
+    options = df_filtered["建築名"].unique().tolist()
+    if len(options) < 2:
+        options = df["建築名"].unique().tolist()
+    
+    # 正解と不正解を混ぜる
+    choices = random.sample([o for o in options if o != st.session_state.question['建築名']], min(len(options)-1, 3)) + [st.session_state.question['建築名']]
+    random.shuffle(choices)
+    st.session_state.choices = choices # ここで選択肢を固定保存
 
 q = st.session_state.question
+choices = st.session_state.choices # 保存した選択肢を読み出す
 
 # --- クイズ表示 ---
 st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？")
