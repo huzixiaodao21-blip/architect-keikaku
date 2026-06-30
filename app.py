@@ -71,13 +71,16 @@ if st.session_state.answer_submitted:
         st.success("正解！")
     else:
         st.error(f"残念！正解は **{q['建築名']}** でした。")
-    
+
     with st.expander("解説を見る"):
-        # Excelの「画像」列にURLが入っているかチェック
+        # デバッグ用：画像の中身を確認
+        # st.write(f"画像列のデータ: {q.get('画像')}") 
+
         if "画像" in q and pd.notna(q["画像"]):
-            # 画像を表示（キャプションに建築名を添える）
-            st.image(q["画像"], caption=q["建築名"], use_container_width=True)
-            
+            st.image(str(q["画像"]), caption=q["建築名"], use_container_width=True)
+        else:
+            st.warning("画像URLが正しく設定されていないか、見つかりません。")
+
         st.write(f"**建築家:** {q['建築家']}")
         st.write(f"**解説:** {q['解説']}")
 
