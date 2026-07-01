@@ -9,7 +9,7 @@ st.title("一級建築士 建築史クイズ")
 # --- データ読み込み ---
 @st.cache_data
 def load_data():
-    return pd.read_excel("建築史.xlsx")
+    return pd.read_csv("計画-事例集.csv")
 
 try:
     df = load_data()
