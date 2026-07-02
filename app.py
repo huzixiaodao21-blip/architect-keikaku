@@ -69,27 +69,43 @@ if 'choices' not in st.session_state:
 choices = st.session_state.choices
 
 # --- クイズ表示 ---
-st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
-st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
-st.write(f"**特徴:** {q['特徴']}")
-
-if st.session_state.question is not None:
+# 1. まず問題があるか確認する
+if st.session_state.get('question') is not None:
     q = st.session_state.question
     
-    st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
+    # 2. クイズ画面の表示
+    st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.get('remaining_questions', []))}問）")
     st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
     st.write(f"**特徴:** {q['特徴']}")
 
-    # 選択肢の生成と回答入力
+    # 3. 選択肢と回答（ここも if 文の中に入れてください）
     choices = st.session_state.choices
     answer = st.radio("建築名を選んでください", choices, key="user_answer")
 
-    # (回答ボタンや解説の処理も、すべてこの if 文の中に入れてください)
     if st.button("回答する", key="answer_button"):
         st.session_state.answer_submitted = True
-        # ... 以下略 ...
+        if answer != q['建築名']:
+            if q['建築名'] not in st.session_state.wrong_list:
+                st.session_state.wrong_list.append(q['建築名'])
+
+    # 4. 回答後の解説（これも if 文の中へ）
+    if st.session_state.answer_submitted:
+        if answer == q['建築名']:
+            st.success("正解！")
+        else:
+            st.error(f"残念！正解は **{q['建築名']}** でした。")
+
+        with st.expander("解説を見る"):
+            img_url = q.get("画像")
+            if pd.notna(img_url) and str(img_url).startswith("http"):
+                st.image(str(img_url), caption=q["建築名"], use_container_width=True)
+            else:
+                st.info("この建築物には画像が設定されていません。")
+            st.write(f"**建築家:** {q['建築家']}")
+            st.write(f"**解説:** {q['解説']}")
+
+# 5. まだ問題がない時の表示（問題がNoneの時）
 else:
-    # まだ問題が選ばれていない時の表示
     st.info("「新しい問題」ボタンを押してクイズを開始してください！")
 
 
