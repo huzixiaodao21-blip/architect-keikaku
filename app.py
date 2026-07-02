@@ -31,7 +31,7 @@ else:
     df_filtered = df
 
 # --- クイズの状態管理 ---
-if 'question' not in st.session_state or st.sidebar.button("新しい問題"):
+if 'question' not in st.session_state or st.button("新しい問題"):
     st.session_state.question = df_filtered.sample(n=1).iloc[0]
     st.session_state.answer_submitted = False
     
