@@ -17,23 +17,37 @@ except Exception as e:
     st.error(f"ファイル読み込みエラー: {e}")
     st.stop()
 
+
 # --- 状態管理の初期化 ---
 if 'wrong_list' not in st.session_state:
     st.session_state.wrong_list = []
+
+if 'remaining_questions' not in st.session_state:
+    st.session_state.remaining_questions = []
+if 'current_genre' not in st.session_state:
+    st.session_state.current_genre = None
+
 
 # --- サイドバーでジャンル選択 ---
 genres = ["全て"] + df["ジャンル"].unique().tolist()
 selected_genre = st.selectbox("ジャンルを選択", genres)
 
-if selected_genre != "全て":
-    df_filtered = df[df["ジャンル"] == selected_genre]
-else:
-    df_filtered = df
+if selected_genre != st.session_state.current_genre:
+    st.session_state.current_genre = selected_genre
+    df_filtered = df if selected_genre == "全て" else df[df["ジャンル"] == selected_genre]
+    # 問題番号のリストを作成してシャッフル
+    st.session_state.remaining_questions = df_filtered.index.tolist()
+    random.shuffle(st.session_state.remaining_questions)
+    st.session_state.question = None # 画面をリセット
 
 # --- クイズの状態管理 ---
-if 'question' not in st.session_state or st.button("新しい問題"):
-    st.session_state.question = df_filtered.sample(n=1).iloc[0]
+if ('question' not in st.session_state or st.button("新しい問題")) and st.session_state.remaining_questions:
+    next_idx = st.session_state.remaining_questions.pop(0) # リストから1つ取り出す
+    st.session_state.question = df.loc[next_idx]
     st.session_state.answer_submitted = False
+    
+    df_filtered = df if st.session_state.current_genre == "全て" else df[df["ジャンル"] == st.session_state.current_genre]
+    options = df_filtered["建築名"].unique().tolist()
     
     # 選択肢をここで一度だけ生成して保存する
     options = df_filtered["建築名"].unique().tolist()
@@ -49,7 +63,7 @@ q = st.session_state.question
 choices = st.session_state.choices # 保存した選択肢を読み出す
 
 # --- クイズ表示 ---
-st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？")
+st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
 st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
 st.write(f"**特徴:** {q['特徴']}")
 
