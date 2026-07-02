@@ -23,7 +23,7 @@ if 'wrong_list' not in st.session_state:
 
 # --- サイドバーでジャンル選択 ---
 genres = ["全て"] + df["ジャンル"].unique().tolist()
-selected_genre = st.sidebar.selectbox("ジャンルを選択", genres)
+selected_genre = st.selectbox("ジャンルを選択", genres)
 
 if selected_genre != "全て":
     df_filtered = df[df["ジャンル"] == selected_genre]
