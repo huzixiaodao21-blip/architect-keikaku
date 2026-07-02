@@ -7,7 +7,7 @@ st.set_page_config(page_title="一級建築士 建築史クイズ", layout="cent
 st.title("一級建築士 建築史クイズ")
 
 # --- データ読み込み ---
-@st.cache_data
+@st.cache_data(ttl=60) 
 def load_data():
     return pd.read_excel("計画-事例集.xlsx")
 
