@@ -60,7 +60,13 @@ if ('question' not in st.session_state or st.button("新しい問題")) and st.s
     st.session_state.choices = choices # ここで選択肢を固定保存
 
 q = st.session_state.question
-choices = st.session_state.choices # 保存した選択肢を読み出す
+q = st.session_state.question
+
+# もし choices がなければ空のリストを代入しておく（安全装置）
+if 'choices' not in st.session_state:
+    st.session_state.choices = []
+
+choices = st.session_state.choices
 
 # --- クイズ表示 ---
 st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
