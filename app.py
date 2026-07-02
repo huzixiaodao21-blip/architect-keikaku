@@ -73,6 +73,26 @@ st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{l
 st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
 st.write(f"**特徴:** {q['特徴']}")
 
+if st.session_state.question is not None:
+    q = st.session_state.question
+    
+    st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
+    st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
+    st.write(f"**特徴:** {q['特徴']}")
+
+    # 選択肢の生成と回答入力
+    choices = st.session_state.choices
+    answer = st.radio("建築名を選んでください", choices, key="user_answer")
+
+    # (回答ボタンや解説の処理も、すべてこの if 文の中に入れてください)
+    if st.button("回答する", key="answer_button"):
+        st.session_state.answer_submitted = True
+        # ... 以下略 ...
+else:
+    # まだ問題が選ばれていない時の表示
+    st.info("「新しい問題」ボタンを押してクイズを開始してください！")
+
+
 # 選択肢の生成
 choices = st.session_state.choices
 
