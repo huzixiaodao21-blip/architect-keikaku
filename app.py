@@ -91,7 +91,6 @@ if st.session_state.answer_submitted:
         st.write(f"**解説:** {q['解説']}")
 
 # --- サイドバーに「間違えた問題」を表示 ---
-st.sidebar.markdown("---")
 st.sidebar.subheader("今回の間違いリスト")
 for item in st.session_state.wrong_list:
     st.sidebar.write(f"・{item}")
