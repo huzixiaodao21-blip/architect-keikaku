@@ -97,8 +97,6 @@ for item in st.session_state.wrong_list:
 genres = ["全て", "復習モード"] + df["ジャンル"].unique().tolist()
 selected_genre = st.selectbox("ジャンルを選択", genres)
 
-# --- 「新しい問題」ボタンの処理 ---
-if st.button("新しい問題", key="new_q_btn"):
     # 復習モードの判定
     if selected_genre == "復習モード":
         # 間違えた問題リスト(建築名)に該当する行だけ抽出
