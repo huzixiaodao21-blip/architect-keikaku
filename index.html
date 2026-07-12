@@ -79,6 +79,28 @@
             resetQuiz();
         }
 
+        function clearWrongList() {
+            wrongList = [];
+            localStorage.removeItem('wrongList');
+            document.getElementById('wrongList').innerText = "";
+            // ここで追加：リセットした後にクイズを再生成する
+            resetQuiz();
+        }
+
+        function clearWrongList() {
+            if (confirm("間違えたリストを全てリセットしてもよろしいですか？")) {
+                wrongList = [];
+                localStorage.removeItem('wrongList');
+                document.getElementById('wrongList').innerText = "";
+                // モードが「苦手問題」のままなら、「通常」に戻して全問表示する
+                if(mode === "review") {
+                    toggleMode();
+                } else {
+                    resetQuiz();
+                }
+            }
+        }
+
         function loadQuestion() {
             // プールが空の時は、再セットしてから進める
             if (remainingPool.length === 0) {
