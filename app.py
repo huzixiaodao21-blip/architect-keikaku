@@ -40,16 +40,18 @@ if selected_genre != st.session_state.current_genre:
 
 # --- 新しい問題ボタン ---
 if st.button("新しい問題"):
+    source_df = df if st.session_state.current_genre == "全て" else df[df["ジャンル"] == st.session_state.current_genre]
+    
+    # 選択肢の生成ロジックを修正（同じジャンル内からのみ抽出）
+    options = source_df["建築名"].unique().tolist()
+    
+    # 問題の取り出しと選択肢生成
     if st.session_state.remaining_questions:
         next_idx = st.session_state.remaining_questions.pop(0)
         st.session_state.question = df.loc[next_idx]
         st.session_state.answer_submitted = False
         
-        # 選択肢生成
-        df_filtered = df if st.session_state.current_genre == "全て" else df[df["ジャンル"] == st.session_state.current_genre]
-        options = df_filtered["建築名"].unique().tolist()
-        if len(options) < 2: options = df["建築名"].unique().tolist()
-        
+        # 選択肢は「source_df」から取ってくることで、ジャンルが固定される
         choices = random.sample([o for o in options if o != st.session_state.question['建築名']], min(len(options)-1, 3)) + [st.session_state.question['建築名']]
         random.shuffle(choices)
         st.session_state.choices = choices
@@ -85,6 +87,17 @@ if st.session_state.get('question') is not None:
             st.write(f"**解説:** {q['解説']}")
 else:
     st.info("「新しい問題」ボタンを押してクイズを開始してください！")
+
+# --- サイドバーにモード切替を追加 ---
+st.sidebar.markdown("---")
+mode = st.sidebar.radio("モード選択", ["通常出題", "苦手問題の復習"])
+
+if mode == "苦手問題の復習":
+    if st.sidebar.button("苦手問題をロード"):
+        # wrong_list にある建築名を df から検索して再セットする処理
+        st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
+        random.shuffle(st.session_state.remaining_questions)
+        st.session_state.question = None
 
 # --- 間違いリスト ---
 st.markdown("---")
