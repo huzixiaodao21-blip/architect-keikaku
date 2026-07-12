@@ -11,6 +11,13 @@ def load_data():
 
 df = load_data()
 
+
+def get_optimized_url(url):
+    # images.weserv.nl を通すと、勝手に画像を圧縮・軽量化して配信してくれます
+    # w=500 は「幅を500pxにする」という指示です。これで1.4MBが数十KBになります！
+    return f"https://images.weserv.nl/?url={url}&w=500&output=webp"
+
+
 # --- 初期化 ---
 if 'wrong_list' not in st.session_state: st.session_state.wrong_list = []
 if 'question' not in st.session_state: st.session_state.question = None
@@ -75,7 +82,9 @@ if st.session_state.question is not None:
         if show_image:
             img_url = q.get("画像")
             if pd.notna(img_url) and isinstance(img_url, str) and img_url.startswith("http"):
-                st.image(img_url, caption=q["建築名"], use_container_width=True)
+                # URLを変換して表示する
+                optimized_url = get_optimized_url(img_url)
+                st.image(optimized_url, caption=q["建築名"], use_container_width=True)
                 
         st.write(f"**建築家:** {q['建築家']}")
         st.write(f"**解説:** {q['解説']}")
