@@ -49,6 +49,9 @@
             });
 
         function resetQuiz() {
+            // 画面上の結果表示を隠す
+            document.getElementById('result').style.display = 'none';
+            
             // モードとジャンルに合わせてプールを作成
             let filtered = (mode === "normal") ? [...quizData] : quizData.filter(q => wrongList.includes(q.建築名));
             const selectedGenre = document.getElementById('genreSelect').value;
@@ -57,13 +60,23 @@
             // シャッフルしてプールに入れる
             remainingPool = filtered.sort(() => Math.random() - 0.5);
             
-            // ここでloadQuestionを自動で呼ばない（ボタンを押した時のみ呼ばれるようにする）
             if (remainingPool.length > 0) {
                 loadQuestion();
             } else {
                 document.getElementById('remainingStats').innerText = "問題がありません";
                 document.getElementById('genre').innerText = "問題を選択してください";
+                document.getElementById('feature').innerText = "";
+                document.getElementById('choices').innerHTML = "";
             }
+        }
+
+        function toggleMode() {
+            // modeを切り替える
+            mode = (mode === "normal") ? "review" : "normal";
+            document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
+            
+            // 切り替えた後に必ずresetQuizを実行する
+            resetQuiz();
         }
 
         function loadQuestion() {
