@@ -6,8 +6,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
-        #q-img { max-width: 100%; display: block; margin: 10px 0; }
+        .choice-btn { display: block; width: 100%; padding: 12px; margin: 8px 0; cursor: pointer; font-size: 16px; }
+        #q-img { max-width: 100%; display: block; margin: 15px 0; }
         .stats { font-weight: bold; color: #555; margin: 10px 0; }
     </style>
 </head>
@@ -20,12 +20,14 @@
         <h3 id="genre">読み込み中...</h3>
         <p><strong>特徴:</strong> <span id="feature"></span></p>
         <div id="choices"></div>
-        <div id="result" style="display:none;">
+        <div id="result" style="display:none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px;">
             <h2 id="feedback"></h2>
+            <!-- 次の問題へボタンを上に移動 -->
+            <button onclick="loadQuestion()" style="padding: 15px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; margin-bottom: 20px;">次の問題へ進む</button>
+            
             <img id="q-img" src="">
             <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
-            <button onclick="loadQuestion()">次の問題へ</button>
         </div>
     </div>
     <p><small>間違えたリスト: <span id="wrongList"></span> <button onclick="clearWrongList()">リセット</button></small></p>
@@ -71,7 +73,6 @@
             document.getElementById('choices').innerHTML = '';
             document.getElementById('result').style.display = 'none';
 
-            // 同じジャンルから選択肢を作成
             let genreCandidates = quizData.filter(item => item.ジャンル === q.ジャンル).map(item => item.建築名);
             let choices = [q.建築名];
             while(choices.length < 4 && genreCandidates.length > choices.length) {
