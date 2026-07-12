@@ -47,7 +47,7 @@ if st.button("新しい問題"):
         random.shuffle(choices)
         st.session_state.choices = choices
     else:
-        st.warning("問題がありません。「問題セットをリロード」を押してください。")
+        st.warning("この条件で出題できる問題はありません。")
 
 # --- 表示 ---
 if st.session_state.question is not None:
