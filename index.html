@@ -6,8 +6,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; }
+        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
         #q-img { max-width: 100%; display: block; margin: 10px 0; }
+        .stats { font-weight: bold; color: #555; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -15,30 +16,30 @@
     <select id="genreSelect" onchange="loadQuestion()"><option value="全て">全て</option></select>
     <button onclick="toggleMode()">モード切替: <span id="modeName">通常</span></button>
     <div id="quiz-box">
+        <div class="stats" id="remainingStats"></div>
         <h3 id="genre">読み込み中...</h3>
-        <p id="feature"></p>
+        <p><strong>特徴:</strong> <span id="feature"></span></p>
         <div id="choices"></div>
         <div id="result" style="display:none;">
             <h2 id="feedback"></h2>
             <img id="q-img" src="">
+            <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
             <button onclick="loadQuestion()">次の問題へ</button>
         </div>
     </div>
-    <p>間違えたリスト: <span id="wrongList"></span></p>
+    <p><small>間違えたリスト: <span id="wrongList"></span> <button onclick="clearWrongList()">リセット</button></small></p>
 
     <script>
         let quizData = [];
         let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
-        let mode = "normal"; // normal or review
+        let mode = "normal";
 
         fetch('計画-事例集.xlsx')
             .then(res => res.arrayBuffer())
             .then(data => {
                 const workbook = XLSX.read(data, {type: 'array'});
                 quizData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
-                // ジャンル選択肢を作成
                 const genres = [...new Set(quizData.map(q => q.ジャンル))];
                 genres.forEach(g => document.getElementById('genreSelect').innerHTML += `<option value="${g}">${g}</option>`);
                 loadQuestion();
@@ -50,6 +51,12 @@
             loadQuestion();
         }
 
+        function clearWrongList() {
+            wrongList = [];
+            localStorage.removeItem('wrongList');
+            loadQuestion();
+        }
+
         function loadQuestion() {
             let filtered = (mode === "normal") ? quizData : quizData.filter(q => wrongList.includes(q.建築名));
             const selectedGenre = document.getElementById('genreSelect').value;
@@ -58,15 +65,18 @@
             if (filtered.length === 0) { alert("問題がありません"); return; }
             const q = filtered[Math.floor(Math.random() * filtered.length)];
             
+            document.getElementById('remainingStats').innerText = `残り問題数: ${filtered.length}問`;
             document.getElementById('genre').innerText = `【${q.ジャンル}】`;
             document.getElementById('feature').innerText = q.特徴;
             document.getElementById('choices').innerHTML = '';
             document.getElementById('result').style.display = 'none';
 
+            // 同じジャンルから選択肢を作成
+            let genreCandidates = quizData.filter(item => item.ジャンル === q.ジャンル).map(item => item.建築名);
             let choices = [q.建築名];
-            while(choices.length < 4) {
-                let randomQ = quizData[Math.floor(Math.random() * quizData.length)];
-                if(!choices.includes(randomQ.建築名)) choices.push(randomQ.建築名);
+            while(choices.length < 4 && genreCandidates.length > choices.length) {
+                let cand = genreCandidates[Math.floor(Math.random() * genreCandidates.length)];
+                if(!choices.includes(cand)) choices.push(cand);
             }
             choices.sort(() => Math.random() - 0.5);
 
@@ -76,16 +86,16 @@
                 btn.innerText = name;
                 btn.onclick = () => {
                     document.getElementById('result').style.display = 'block';
-                    if (name === q.建築名) {
-                        document.getElementById('feedback').innerText = "正解！";
-                    } else {
-                        document.getElementById('feedback').innerText = "残念！正解は " + q.建築名;
-                        if (!wrongList.includes(q.建築名)) wrongList.push(q.建築名);
-                        localStorage.setItem('wrongList', JSON.stringify(wrongList));
-                        document.getElementById('wrongList').innerText = wrongList.join(', ');
-                    }
-                    document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
+                    document.getElementById('feedback').innerText = (name === q.建築名) ? "正解！" : "残念！正解は " + q.建築名;
+                    document.getElementById('architect').innerText = q.建築家;
                     document.getElementById('explanation').innerText = q.解説;
+                    document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
+                    
+                    if (name !== q.建築名 && !wrongList.includes(q.建築名)) {
+                        wrongList.push(q.建築名);
+                        localStorage.setItem('wrongList', JSON.stringify(wrongList));
+                    }
+                    document.getElementById('wrongList').innerText = wrongList.join(', ');
                 };
                 document.getElementById('choices').appendChild(btn);
             });
