@@ -6,25 +6,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .choice-btn { display: block; width: 100%; padding: 12px; margin: 8px 0; cursor: pointer; font-size: 16px; }
-        #q-img { max-width: 100%; display: block; margin: 15px 0; }
-        .stats { font-weight: bold; color: #555; margin: 10px 0; }
+        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
+        #q-img { max-width: 100%; display: block; margin: 10px 0; }
+        .stats { font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+        /* 次へボタンの見た目を自然に */
+        .next-btn { background: #555; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <h1>建築史クイズ</h1>
-    <select id="genreSelect" onchange="loadQuestion()"><option value="全て">全て</option></select>
+    <select id="genreSelect" onchange="resetQuiz()"><option value="全て">全て</option></select>
     <button onclick="toggleMode()">モード切替: <span id="modeName">通常</span></button>
     <div id="quiz-box">
         <div class="stats" id="remainingStats"></div>
         <h3 id="genre">読み込み中...</h3>
         <p><strong>特徴:</strong> <span id="feature"></span></p>
         <div id="choices"></div>
-        <div id="result" style="display:none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px;">
+        <div id="result" style="display:none; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
             <h2 id="feedback"></h2>
-            <!-- 次の問題へボタンを上に移動 -->
-            <button onclick="loadQuestion()" style="padding: 15px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer; margin-bottom: 20px;">次の問題へ進む</button>
-            
+            <button class="next-btn" onclick="loadQuestion()">次の問題へ進む</button>
             <img id="q-img" src="">
             <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
@@ -34,6 +34,7 @@
 
     <script>
         let quizData = [];
+        let remainingPool = []; // 出題待ちリスト
         let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
         let mode = "normal";
 
@@ -44,30 +45,42 @@
                 quizData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const genres = [...new Set(quizData.map(q => q.ジャンル))];
                 genres.forEach(g => document.getElementById('genreSelect').innerHTML += `<option value="${g}">${g}</option>`);
-                loadQuestion();
+                resetQuiz();
             });
+
+        function resetQuiz() {
+            // モードとジャンルに合わせてプールを作成
+            let filtered = (mode === "normal") ? [...quizData] : quizData.filter(q => wrongList.includes(q.建築名));
+            const selectedGenre = document.getElementById('genreSelect').value;
+            if (selectedGenre !== "全て") filtered = filtered.filter(q => q.ジャンル === selectedGenre);
+            
+            // シャッフルしてプールに入れる
+            remainingPool = filtered.sort(() => Math.random() - 0.5);
+            loadQuestion();
+        }
 
         function toggleMode() {
             mode = (mode === "normal") ? "review" : "normal";
             document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
-            loadQuestion();
+            resetQuiz();
         }
 
         function clearWrongList() {
             wrongList = [];
             localStorage.removeItem('wrongList');
-            loadQuestion();
+            resetQuiz();
         }
 
         function loadQuestion() {
-            let filtered = (mode === "normal") ? quizData : quizData.filter(q => wrongList.includes(q.建築名));
-            const selectedGenre = document.getElementById('genreSelect').value;
-            if (selectedGenre !== "全て") filtered = filtered.filter(q => q.ジャンル === selectedGenre);
+            if (remainingPool.length === 0) {
+                alert("全ての問題が終了しました！最初からやり直します。");
+                resetQuiz();
+                return;
+            }
 
-            if (filtered.length === 0) { alert("問題がありません"); return; }
-            const q = filtered[Math.floor(Math.random() * filtered.length)];
+            const q = remainingPool.pop(); // リストから1つ取り出す（これで周回中に重複しない）
             
-            document.getElementById('remainingStats').innerText = `残り問題数: ${filtered.length}問`;
+            document.getElementById('remainingStats').innerText = `残り問題数: ${remainingPool.length + 1}問`;
             document.getElementById('genre').innerText = `【${q.ジャンル}】`;
             document.getElementById('feature').innerText = q.特徴;
             document.getElementById('choices').innerHTML = '';
