@@ -92,12 +92,24 @@ else:
 st.sidebar.markdown("---")
 mode = st.sidebar.radio("モード選択", ["通常出題", "苦手問題の復習"])
 
+# モードが変わったらクイズをリセットする処理
+if 'previous_mode' not in st.session_state:
+    st.session_state.previous_mode = mode
+
+if mode != st.session_state.previous_mode:
+    st.session_state.previous_mode = mode
+    st.session_state.question = None # モードが変わったら問題消去
+    st.rerun() # 画面を即時更新
+
 if mode == "苦手問題の復習":
     if st.sidebar.button("苦手問題をロード"):
-        # wrong_list にある建築名を df から検索して再セットする処理
-        st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
-        random.shuffle(st.session_state.remaining_questions)
-        st.session_state.question = None
+        if st.session_state.wrong_list:
+            st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
+            random.shuffle(st.session_state.remaining_questions)
+            st.session_state.question = None
+            st.rerun() # リロードして反映
+        else:
+            st.sidebar.warning("まだ間違いがありません！")
 
 # --- 間違いリスト ---
 st.markdown("---")
