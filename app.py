@@ -6,10 +6,10 @@ st.set_page_config(page_title="一級建築士 建築史クイズ", layout="cent
 st.title("一級建築士 建築史クイズ")
 
 @st.cache_data(ttl=3600) 
-def load_data():
+def get_df_minimal():
     return pd.read_excel("計画-事例集.xlsx", engine='openpyxl', usecols=["ジャンル", "建築名", "場所", "時代", "特徴", "画像", "建築家", "解説"])
 
-df = load_data()
+df = get_df_minimal()
 
 
 def get_optimized_url(url):
@@ -47,17 +47,23 @@ if st.session_state.get('last_config') != current_config:
         st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
     random.shuffle(st.session_state.remaining_questions)
 
+# --- 新しい問題ボタン ---
 if st.button("新しい問題"):
     if st.session_state.remaining_questions:
         idx = st.session_state.remaining_questions.pop(0)
-        st.session_state.question = df.loc[idx]
+        # 必要な行だけを抽出
+        q = df.loc[idx]
+        st.session_state.question = q
         st.session_state.answer_submitted = False
         
-        genre_match = df[df["ジャンル"] == st.session_state.question["ジャンル"]]
+        # 選択肢の計算を最小限に
+        genre_match = df[df["ジャンル"] == q["ジャンル"]]
         opts = genre_match["建築名"].unique().tolist()
-        choices = random.sample([o for o in opts if o != st.session_state.question['建築名']], min(len(opts)-1, 3)) + [st.session_state.question['建築名']]
+        # 選択肢の生成
+        choices = random.sample([o for o in opts if o != q['建築名']], min(len(opts)-1, 3)) + [q['建築名']]
         random.shuffle(choices)
         st.session_state.choices = choices
+        st.rerun() # 即座に反映
     else:
         st.warning("問題がありません。")
 
@@ -80,11 +86,13 @@ if st.session_state.question is not None:
         
         # 画像表示を「チェックボックスがONの時だけ」にする
         if show_image:
-            img_url = q.get("画像")
-            if pd.notna(img_url) and isinstance(img_url, str) and img_url.startswith("http"):
-                # URLを変換して表示する
+            img_url = str(q.get("画像")).strip() # 余分な空白を削除！
+            if img_url and img_url.startswith("http"):
                 optimized_url = get_optimized_url(img_url)
-                st.image(optimized_url, caption=q["建築名"], use_container_width=True)
+                try:
+                    st.image(optimized_url, caption=q["建築名"], use_container_width=True)
+                except Exception as e:
+                    st.error("画像の読み込みに失敗しました")
                 
         st.write(f"**建築家:** {q['建築家']}")
         st.write(f"**解説:** {q['解説']}")
