@@ -76,8 +76,14 @@ if st.session_state.question is not None:
             st.error(f"残念！正解は **{q['建築名']}** でした。")
         
         with st.expander("解説を見る"):
-            img_url = q.get("画像")
-            if pd.notna(img_url) and isinstance(img_url, str) and img_url.startswith("http"):
-                st.image(img_url, caption=q["建築名"], use_container_width=True)
+            # 1. 最初に「解説」と「建築家」を先に表示させる
             st.write(f"**建築家:** {q['建築家']}")
             st.write(f"**解説:** {q['解説']}")
+            
+            # 2. 画像は「解説を見た後」に読み込まれるように少し工夫する
+            img_url = q.get("画像")
+            if pd.notna(img_url) and isinstance(img_url, str) and img_url.startswith("http"):
+                # 画像を別枠で表示することで、テキストの表示を阻害しないようにする
+                st.write("---")
+                st.write("画像を読み込み中...") # 先にテキストを表示して、体感待ち時間を減らす
+                st.image(img_url, caption=q["建築名"], use_container_width=True)
