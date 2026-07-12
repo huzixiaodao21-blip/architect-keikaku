@@ -56,29 +56,25 @@
             
             // シャッフルしてプールに入れる
             remainingPool = filtered.sort(() => Math.random() - 0.5);
-            loadQuestion();
-        }
-
-        function toggleMode() {
-            mode = (mode === "normal") ? "review" : "normal";
-            document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
-            resetQuiz();
-        }
-
-        function clearWrongList() {
-            wrongList = [];
-            localStorage.removeItem('wrongList');
-            resetQuiz();
+            
+            // ここでloadQuestionを自動で呼ばない（ボタンを押した時のみ呼ばれるようにする）
+            if (remainingPool.length > 0) {
+                loadQuestion();
+            } else {
+                document.getElementById('remainingStats').innerText = "問題がありません";
+                document.getElementById('genre').innerText = "問題を選択してください";
+            }
         }
 
         function loadQuestion() {
+            // プールが空の時は、再セットしてから進める
             if (remainingPool.length === 0) {
                 alert("全ての問題が終了しました！最初からやり直します。");
                 resetQuiz();
-                return;
+                return; // ここで一度抜けるのがポイント
             }
 
-            const q = remainingPool.pop(); // リストから1つ取り出す（これで周回中に重複しない）
+            const q = remainingPool.pop(); 
             
             document.getElementById('remainingStats').innerText = `残り問題数: ${remainingPool.length + 1}問`;
             document.getElementById('genre').innerText = `【${q.ジャンル}】`;
