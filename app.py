@@ -90,19 +90,24 @@ else:
 
 # --- サイドバーにモード切替を追加 ---
 st.sidebar.markdown("---")
-mode = st.sidebar.radio("モード選択", ["通常出題", "苦手問題の復習"])
+mode = st.sidebar.radio("モード選択", ["通常出題", "苦手問題の復習"], key="mode_radio")
 
-# モードが変わったらクイズをリセットする処理
-if 'previous_mode' not in st.session_state:
-    st.session_state.previous_mode = "通常出題"
-
-if mode != st.session_state.previous_mode:
+# モードが変わった時の処理
+if mode != st.session_state.get('previous_mode'):
     st.session_state.previous_mode = mode
-    st.session_state.question = None  # モードが変わったら問題消去
+    st.session_state.question = None # 問題をリセット
+    
+    # 【追加】通常モードに戻った時に、現在のジャンルに合わせてリストを再生成する
+    if mode == "通常出題":
+        df_filtered = df if st.session_state.current_genre == "全て" else df[df["ジャンル"] == st.session_state.current_genre]
+        st.session_state.remaining_questions = df_filtered.index.tolist()
+        random.shuffle(st.session_state.remaining_questions)
 
+# 苦手問題ロードの処理
 if mode == "苦手問題の復習":
     if st.sidebar.button("苦手問題をロード"):
         if st.session_state.wrong_list:
+            # 苦手問題のみ抽出
             st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
             random.shuffle(st.session_state.remaining_questions)
             st.session_state.question = None
