@@ -20,32 +20,33 @@ except Exception as e:
 # --- 状態管理の初期化 ---
 if 'wrong_list' not in st.session_state: st.session_state.wrong_list = []
 if 'remaining_questions' not in st.session_state: st.session_state.remaining_questions = []
-if 'current_genre' not in st.session_state: st.session_state.current_genre = None
+if 'choices' not in st.session_state: st.session_state.choices = []
+if 'question' not in st.session_state: st.session_state.question = None
+if 'answer_submitted' not in st.session_state: st.session_state.answer_submitted = False
 
-# --- ジャンル選択 ---
+# --- UIとロジック ---
 genres = ["全て", "復習モード"] + df["ジャンル"].unique().tolist()
 selected_genre = st.selectbox("ジャンルを選択", genres)
 
-# --- 「新しい問題」ボタン処理 ---
+# 新しい問題ボタン
 if st.button("新しい問題", key="new_q_btn"):
-    # ジャンル・モードによる対象データの絞り込み
+    # データの絞り込み
     if selected_genre == "復習モード":
         target_df = df[df["建築名"].isin(st.session_state.wrong_list)]
     else:
         target_df = df if selected_genre == "全て" else df[df["ジャンル"] == selected_genre]
 
-    st.session_state.remaining_questions = target_df.index.tolist()
-    random.shuffle(st.session_state.remaining_questions)
-    
-    if st.session_state.remaining_questions:
+    if not target_df.empty:
+        st.session_state.remaining_questions = target_df.index.tolist()
+        random.shuffle(st.session_state.remaining_questions)
+        
         next_idx = st.session_state.remaining_questions.pop(0)
         st.session_state.question = df.loc[next_idx]
         st.session_state.answer_submitted = False
         
-        # 同じジャンルから選択肢を作る
+        # 選択肢の生成（同一ジャンルから）
         q = st.session_state.question
         genre_options = df[df["ジャンル"] == q["ジャンル"]]["建築名"].unique().tolist()
-        
         choices = random.sample([o for o in genre_options if o != q['建築名']], min(len(genre_options)-1, 3)) + [q['建築名']]
         random.shuffle(choices)
         st.session_state.choices = choices
@@ -54,13 +55,14 @@ if st.button("新しい問題", key="new_q_btn"):
         st.session_state.question = None
 
 # --- クイズ表示 ---
-if st.session_state.get('question') is not None:
+if st.session_state.question is not None:
     q = st.session_state.question
-    st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
+    st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？")
+    st.write(f"残り問題数: {len(st.session_state.remaining_questions)}")
     st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
     st.write(f"**特徴:** {q['特徴']}")
 
-    # 選択肢と回答
+    # 選択肢
     answer = st.radio("建築名を選んでください", st.session_state.choices, key="user_answer")
 
     if st.button("回答する", key="answer_check"):
@@ -80,11 +82,9 @@ if st.session_state.get('question') is not None:
                 st.image(str(img_url), caption=q["建築名"], use_container_width=True)
             st.write(f"**建築家:** {q['建築家']}")
             st.write(f"**解説:** {q['解説']}")
-else:
-    st.info("「新しい問題」ボタンを押してクイズを開始してください！")
 
-# --- 間違いリスト ---
-st.markdown("---")
-st.sidebar.subheader("今回の間違いリスト")
+# 間違いリスト
+st.sidebar.markdown("---")
+st.sidebar.subheader("間違いリスト")
 for item in st.session_state.wrong_list:
     st.sidebar.write(f"・{item}")
