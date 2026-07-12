@@ -18,34 +18,23 @@ except Exception as e:
     st.stop()
 
 # --- 状態管理の初期化 ---
-if 'wrong_list' not in st.session_state:
-    st.session_state.wrong_list = []
-if 'remaining_questions' not in st.session_state:
-    st.session_state.remaining_questions = []
-if 'question' not in 
-    st.session_state: st.session_state.question = None
-if 'choices' not in 
-    st.session_state: st.session_state.choices = [] 
-if 'answer_submitted' not in 
-    st.session_state: st.session_state.answer_submitted = False
-if 'current_genre' not in st.session_state:
-    st.session_state.current_genre = None
+if 'wrong_list' not in st.session_state: st.session_state.wrong_list = []
+if 'remaining_questions' not in st.session_state: st.session_state.remaining_questions = []
+if 'question' not in st.session_state: st.session_state.question = None
+if 'choices' not in st.session_state: st.session_state.choices = []
+if 'answer_submitted' not in st.session_state: st.session_state.answer_submitted = False
 
-# --- サイドバーにジャンル選択を追加 ---
+# --- サイドバーにジャンル選択 ---
 genres = ["全て", "復習モード"] + df["ジャンル"].unique().tolist()
 selected_genre = st.selectbox("ジャンルを選択", genres)
 
-# --- 「新しい問題」ボタンの処理 (1箇所にまとめる) ---
-# keyをつけることで、重複エラーを防ぎます
+# --- 「新しい問題」ボタンの処理 ---
 if st.button("新しい問題", key="new_q_btn"):
-    # 復習モードの判定
     if selected_genre == "復習モード":
-        # 間違えた問題リスト(建築名)に該当する行だけ抽出
         target_df = df[df["建築名"].isin(st.session_state.wrong_list)]
     else:
         target_df = df if selected_genre == "全て" else df[df["ジャンル"] == selected_genre]
 
-    # リスト作成とシャッフル
     st.session_state.remaining_questions = target_df.index.tolist()
     random.shuffle(st.session_state.remaining_questions)
     
@@ -54,13 +43,10 @@ if st.button("新しい問題", key="new_q_btn"):
         st.session_state.question = df.loc[next_idx]
         st.session_state.answer_submitted = False
         
-        # --- ここで「同じジャンル」から選択肢を作る ---
-        current_q = st.session_state.question
-        # 同じジャンルの建築名だけを抽出
-        genre_options = df[df["ジャンル"] == current_q["ジャンル"]]["建築名"].unique().tolist()
-        
-        # 選択肢を作る（正解を含めて4つ）
-        choices = random.sample([o for o in genre_options if o != current_q['建築名']], min(len(genre_options)-1, 3)) + [current_q['建築名']]
+        # 選択肢生成
+        q = st.session_state.question
+        genre_options = df[df["ジャンル"] == q["ジャンル"]]["建築名"].unique().tolist()
+        choices = random.sample([o for o in genre_options if o != q['建築名']], min(len(genre_options)-1, 3)) + [q['建築名']]
         random.shuffle(choices)
         st.session_state.choices = choices
     else:
@@ -78,7 +64,6 @@ if st.session_state.question is not None and st.session_state.choices:
     # 選択肢と回答
     answer = st.radio("建築名を選んでください", st.session_state.choices, key="user_answer")
 
-    # 回答ボタンにも固有のkeyを追加
     if st.button("回答する", key="answer_check_btn"):
         st.session_state.answer_submitted = True
         if answer != q['建築名'] and q['建築名'] not in st.session_state.wrong_list:
