@@ -7,7 +7,7 @@ st.title("一級建築士 建築史クイズ")
 
 @st.cache_data(ttl=60) 
 def load_data():
-    return pd.read_excel("計画-事例集.xlsx", usecols=["ジャンル", "建築名", "場所", "時代", "特徴", "画像", "建築家", "解説"])
+    return pd.read_excel("計画-事例集.xlsx", engine='openpyxl', usecols=["ジャンル", "建築名", "場所", "時代", "特徴", "画像", "建築家", "解説"])
 
 df = load_data()
 
