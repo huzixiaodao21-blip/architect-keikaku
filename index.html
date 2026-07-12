@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>一級建築士 建築史クイズ</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
+        #question-image { max-width: 100%; height: auto; margin-top: 20px; }
+        .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>一級建築士 建築史クイズ</h1>
+    <div id="quiz-container">
+        <h2 id="genre">ジャンルを選択してください</h2>
+        <p id="feature"></p>
+        <div id="choices" class="choices"></div>
+        <img id="question-image" src="" style="display:none;">
+    </div>
+
+    <script>
+        // ここにクイズデータを格納します（後述）
+        const quizData = [
+            { "name": "法隆寺", "genre": "寺院", "feature": "世界最古の木造建築", "image": "https://..." },
+            // ...500件のデータをここに！
+        ];
+
+        function loadQuestion() {
+            const q = quizData[Math.floor(Math.random() * quizData.length)];
+            document.getElementById('genre').innerText = q.genre;
+            document.getElementById('feature').innerText = q.feature;
+            document.getElementById('question-image').src = q.image;
+            document.getElementById('question-image').style.display = 'block';
+            // 選択肢生成処理...
+        }
+        loadQuestion();
+    </script>
+</body>
+</html>
