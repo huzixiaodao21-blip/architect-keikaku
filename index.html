@@ -2,38 +2,64 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一級建築士 建築史クイズ</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; }
-        #question-image { max-width: 100%; height: auto; margin-top: 20px; }
-        .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        button { padding: 10px; cursor: pointer; }
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center; background: #f4f4f9; }
+        #quiz-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: white; }
+        .choice-btn:hover { background: #e0e0e0; }
+        #image-box img { max-width: 100%; height: auto; margin: 15px 0; border-radius: 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h1>一級建築士 建築史クイズ</h1>
-    <div id="quiz-container">
-        <h2 id="genre">ジャンルを選択してください</h2>
-        <p id="feature"></p>
-        <div id="choices" class="choices"></div>
-        <img id="question-image" src="" style="display:none;">
+    <h1>建築史クイズ</h1>
+    <div id="quiz-box">
+        <h3 id="genre"></h3>
+        <p><strong>特徴:</strong> <span id="feature"></span></p>
+        <div id="choices"></div>
+        <div id="result" class="hidden">
+            <h2 id="feedback"></h2>
+            <div id="image-box"><img id="q-img" src="" alt="建築物"></div>
+            <p id="explanation"></p>
+            <button onclick="loadQuestion()">次の問題へ</button>
+        </div>
     </div>
 
     <script>
-        // ここにクイズデータを格納します（後述）
         const quizData = [
-            { "name": "法隆寺", "genre": "寺院", "feature": "世界最古の木造建築", "image": "https://..." },
-            // ...500件のデータをここに！
+            { "name": "伊勢神宮内宮正殿", "genre": "1_日本建築史", "feature": "切妻・平入り・千木・式年遷宮", "image": "https://images.weserv.nl/?url=https://raw.github.com/huzixiaodao21-blip/architect-keikaku/main/images/01_02.png&w=500", "desc": "神明造り。無彩色の木部、四周に高欄付きの縁。" },
+            { "name": "出雲大社本殿", "genre": "1_日本建築史", "feature": "切妻・妻入り・左右非対称", "image": "https://images.weserv.nl/?url=https://raw.github.com/huzixiaodao21-blip/architect-keikaku/main/images/01_03.png&w=500", "desc": "大社造り。正方形の平面、左右非対称の形式。" },
+            { "name": "住吉大社本殿", "genre": "1_日本建築史", "feature": "切妻・妻入りの住吉造り", "image": "https://images.weserv.nl/?url=https://raw.github.com/huzixiaodao21-blip/architect-keikaku/main/images/01_04.png&w=500", "desc": "古くからの素朴な形式。回縁・高欄なし。" },
+            { "name": "法隆寺金堂", "genre": "1_日本建築史", "feature": "飛鳥様式・重層入母屋造り・雲斗雲肘木", "image": "https://images.weserv.nl/?url=https://raw.github.com/huzixiaodao21-blip/architect-keikaku/main/images/01_05.png&w=500", "desc": "重層入母屋造り。雲形組物、卍崩しの組子が特徴。" }
         ];
 
+        let currentQ;
         function loadQuestion() {
-            const q = quizData[Math.floor(Math.random() * quizData.length)];
-            document.getElementById('genre').innerText = q.genre;
-            document.getElementById('feature').innerText = q.feature;
-            document.getElementById('question-image').src = q.image;
-            document.getElementById('question-image').style.display = 'block';
-            // 選択肢生成処理...
+            currentQ = quizData[Math.floor(Math.random() * quizData.length)];
+            document.getElementById('genre').innerText = `【${currentQ.genre}】`;
+            document.getElementById('feature').innerText = currentQ.feature;
+            document.getElementById('choices').innerHTML = '';
+            document.getElementById('result').classList.add('hidden');
+            
+            // 選択肢作成（簡単なダミー含む）
+            quizData.forEach(q => {
+                let btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = q.name;
+                btn.onclick = () => checkAnswer(q.name);
+                document.getElementById('choices').appendChild(btn);
+            });
         }
+
+        function checkAnswer(ans) {
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('feedback').innerText = (ans === currentQ.name) ? "正解！" : "残念！正解は " + currentQ.name;
+            document.getElementById('q-img').src = currentQ.image;
+            document.getElementById('explanation').innerText = currentQ.desc;
+        }
+
         loadQuestion();
     </script>
 </body>
