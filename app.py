@@ -22,6 +22,12 @@ if 'wrong_list' not in st.session_state:
     st.session_state.wrong_list = []
 if 'remaining_questions' not in st.session_state:
     st.session_state.remaining_questions = []
+if 'question' not in 
+    st.session_state: st.session_state.question = None
+if 'choices' not in 
+    st.session_state: st.session_state.choices = [] 
+if 'answer_submitted' not in 
+    st.session_state: st.session_state.answer_submitted = False
 if 'current_genre' not in st.session_state:
     st.session_state.current_genre = None
 
@@ -60,9 +66,10 @@ if st.button("新しい問題", key="new_q_btn"):
     else:
         st.warning("対象となる問題がありません！")
         st.session_state.question = None
+        st.session_state.choices = []
 
 # --- クイズ表示 ---
-if st.session_state.get('question') is not None:
+if st.session_state.question is not None and st.session_state.choices:
     q = st.session_state.question
     st.subheader(f"【{q['ジャンル']}】 この建築物はどれ？（残り:{len(st.session_state.remaining_questions)}問）")
     st.write(f"**場所:** {q['場所']} / **時代:** {q['時代']}")
