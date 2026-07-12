@@ -17,13 +17,14 @@ if 'question' not in st.session_state: st.session_state.question = None
 if 'choices' not in st.session_state: st.session_state.choices = []
 
 # --- モード選択（サイドバー） ---
-st.sidebar.subheader("設定")
 mode = st.sidebar.radio("モード選択", ["通常出題", "苦手問題の復習"])
 genres = ["全て"] + df["ジャンル"].unique().tolist()
 selected_genre = st.sidebar.selectbox("ジャンルを選択", genres)
 
 # --- 制御処理 ---
-if st.sidebar.button("問題セットをリロード"):
+current_config = f"{mode}-{selected_genre}"
+if st.session_state.get('last_config') != current_config:
+    st.session_state.last_config = current_config
     st.session_state.question = None
     if mode == "通常出題":
         df_f = df if selected_genre == "全て" else df[df["ジャンル"] == selected_genre]
@@ -31,7 +32,6 @@ if st.sidebar.button("問題セットをリロード"):
     else:
         st.session_state.remaining_questions = df[df["建築名"].isin(st.session_state.wrong_list)].index.tolist()
     random.shuffle(st.session_state.remaining_questions)
-    st.rerun()
 
 # --- 新しい問題ボタン ---
 if st.button("新しい問題"):
@@ -64,6 +64,19 @@ if st.session_state.question is not None:
 
     if st.session_state.answer_submitted:
         if answer == q['建築名']: st.success("正解！")
-        else: st.error(f"正解は **{q['建築名']}**")
-        with st.expander("解説"):
-            st.write(f"**建築家:** {q['建築家']}\n\n{q['解説']}")
+        else: st.error(f"残念！正解は **{q['建築名']}** でした。")
+        
+        with st.expander("解説を見る"):
+            img_url = q.get("画像")
+            if pd.notna(img_url) and str(img_url).startswith("http"):
+                st.image(str(img_url), caption=q["建築名"], use_container_width=True)
+            st.write(f"**建築家:** {q['建築家']}")
+            st.write(f"**解説:** {q['解説']}")
+
+st.markdown("---")
+st.subheader("今回間違えた問題リスト")
+if st.session_state.wrong_list:
+    for item in st.session_state.wrong_list:
+        st.write(f"・{item}")
+else:
+    st.write("まだ間違いはありません。頑張ってください！")
