@@ -26,10 +26,9 @@
         <div class="stats" id="remainingStats"></div>
         <h3 id="genre">読み込み中...</h3>
         
-        <!-- 建築名当てモード用の表示 -->
+        <!-- 建築名当てモード用の表示（画像はここから排除） -->
         <div id="nameModeArea">
             <p><strong>特徴:</strong> <span id="feature"></span></p>
-            <img id="q-img" src="">
         </div>
 
         <!-- 特徴当てモード用の表示 -->
@@ -44,6 +43,8 @@
             <h2 id="feedback"></h2>
             <button class="next-btn" onclick="loadQuestion()">次の問題へ進む</button>
             <p><strong>建築名:</strong> <span id="ansName" style="font-weight:bold;"></span></p>
+            <!-- 画像は解説エリアに移動 -->
+            <img id="q-img" src="">
             <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
         </div>
@@ -54,8 +55,8 @@
         let quizData = [];
         let remainingPool = [];
         let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
-        let mode = "normal"; // normal or review
-        let quizType = "name"; // name (建築名当て) or feature (特徴当て)
+        let mode = "normal"; 
+        let quizType = "name"; 
 
         fetch('計画-事例集.xlsx')
             .then(res => res.arrayBuffer())
@@ -94,7 +95,6 @@
                 document.getElementById('genre').innerText = "問題を選択してください";
                 document.getElementById('feature').innerText = "";
                 document.getElementById('question-title').innerText = "";
-                document.getElementById('q-img').src = "";
                 document.getElementById('choices').innerHTML = "";
             }
         }
@@ -126,18 +126,11 @@
             document.getElementById('choices').innerHTML = '';
             document.getElementById('result').style.display = 'none';
 
-            // クイズ形式による表示切替
             let correctValue = "";
             if (quizType === "name") {
                 document.getElementById('nameModeArea').style.display = "block";
                 document.getElementById('featureModeArea').style.display = "none";
                 document.getElementById('feature').innerText = q.特徴;
-                if (q.画像) {
-                    document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
-                    document.getElementById('q-img').style.display = "block";
-                } else {
-                    document.getElementById('q-img').style.display = "none";
-                }
                 correctValue = q.建築名;
             } else {
                 document.getElementById('nameModeArea').style.display = "none";
@@ -146,7 +139,6 @@
                 correctValue = q.特徴;
             }
 
-            // 選択肢の生成（同じジャンルから4択）
             let keyToMap = (quizType === "name") ? "建築名" : "特徴";
             let genreCandidates = quizData.filter(item => item.ジャンル === q.ジャンル).map(item => item[keyToMap]);
             let choices = [correctValue];
@@ -168,6 +160,13 @@
                     document.getElementById('architect').innerText = q.建築家;
                     document.getElementById('explanation').innerText = q.解説;
                     
+                    if (q.画像) {
+                        document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
+                        document.getElementById('q-img').style.display = "block";
+                    } else {
+                        document.getElementById('q-img').style.display = "none";
+                    }
+
                     if (!isCorrect && !wrongList.includes(q.建築名)) {
                         wrongList.push(q.建築名);
                         localStorage.setItem('wrongList', JSON.stringify(wrongList));
