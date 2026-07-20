@@ -6,26 +6,44 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
-        #q-img { max-width: 100%; display: block; margin: 10px 0; }
+        .choice-btn { display: block; width: 100%; padding: 12px; margin: 8px 0; cursor: pointer; text-align: left; font-size: 15px; }
+        #q-img { max-width: 100%; display: block; margin: 15px 0; }
         .stats { font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
-        /* 次へボタンの見た目を自然に */
         .next-btn { background: #555; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 15px; }
+        .control-panel { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        #question-title { font-size: 24px; color: #333; margin: 15px 0; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>建築史クイズ</h1>
-    <select id="genreSelect" onchange="resetQuiz()"><option value="全て">全て</option></select>
-    <button onclick="toggleMode()">モード切替: <span id="modeName">通常</span></button>
+    <h1>一級建築士 建築史クイズ</h1>
+    <div class="control-panel">
+        <select id="genreSelect" onchange="resetQuiz()"><option value="全て">全て</option></select>
+        <button onclick="toggleQuizType()">形式: <span id="typeName">建築名当て</span></button>
+        <button onclick="toggleMode()">モード: <span id="modeName">通常</span></button>
+    </div>
+    
     <div id="quiz-box">
         <div class="stats" id="remainingStats"></div>
         <h3 id="genre">読み込み中...</h3>
-        <p><strong>特徴:</strong> <span id="feature"></span></p>
+        
+        <!-- 建築名当てモード用の表示 -->
+        <div id="nameModeArea">
+            <p><strong>特徴:</strong> <span id="feature"></span></p>
+            <img id="q-img" src="">
+        </div>
+
+        <!-- 特徴当てモード用の表示 -->
+        <div id="featureModeArea" style="display:none;">
+            <p>以下の建築物の正しい特徴を選んでください:</p>
+            <div id="question-title"></div>
+        </div>
+
         <div id="choices"></div>
+
         <div id="result" style="display:none; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
             <h2 id="feedback"></h2>
             <button class="next-btn" onclick="loadQuestion()">次の問題へ進む</button>
-            <img id="q-img" src="">
+            <p><strong>建築名:</strong> <span id="ansName" style="font-weight:bold;"></span></p>
             <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
         </div>
@@ -34,9 +52,10 @@
 
     <script>
         let quizData = [];
-        let remainingPool = []; // 出題待ちリスト
+        let remainingPool = [];
         let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
-        let mode = "normal";
+        let mode = "normal"; // normal or review
+        let quizType = "name"; // name (建築名当て) or feature (特徴当て)
 
         fetch('計画-事例集.xlsx')
             .then(res => res.arrayBuffer())
@@ -48,16 +67,24 @@
                 resetQuiz();
             });
 
+        function toggleQuizType() {
+            quizType = (quizType === "name") ? "feature" : "name";
+            document.getElementById('typeName').innerText = (quizType === "name") ? "建築名当て" : "特徴当て";
+            resetQuiz();
+        }
+
+        function toggleMode() {
+            mode = (mode === "normal") ? "review" : "normal";
+            document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
+            resetQuiz();
+        }
+
         function resetQuiz() {
-            // 画面上の結果表示を隠す
             document.getElementById('result').style.display = 'none';
-            
-            // モードとジャンルに合わせてプールを作成
             let filtered = (mode === "normal") ? [...quizData] : quizData.filter(q => wrongList.includes(q.建築名));
             const selectedGenre = document.getElementById('genreSelect').value;
             if (selectedGenre !== "全て") filtered = filtered.filter(q => q.ジャンル === selectedGenre);
             
-            // シャッフルしてプールに入れる
             remainingPool = filtered.sort(() => Math.random() - 0.5);
             
             if (remainingPool.length > 0) {
@@ -66,25 +93,10 @@
                 document.getElementById('remainingStats').innerText = "問題がありません";
                 document.getElementById('genre').innerText = "問題を選択してください";
                 document.getElementById('feature').innerText = "";
+                document.getElementById('question-title').innerText = "";
+                document.getElementById('q-img').src = "";
                 document.getElementById('choices').innerHTML = "";
             }
-        }
-
-        function toggleMode() {
-            // modeを切り替える
-            mode = (mode === "normal") ? "review" : "normal";
-            document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
-            
-            // 切り替えた後に必ずresetQuizを実行する
-            resetQuiz();
-        }
-
-        function clearWrongList() {
-            wrongList = [];
-            localStorage.removeItem('wrongList');
-            document.getElementById('wrongList').innerText = "";
-            // ここで追加：リセットした後にクイズを再生成する
-            resetQuiz();
         }
 
         function clearWrongList() {
@@ -92,51 +104,71 @@
                 wrongList = [];
                 localStorage.removeItem('wrongList');
                 document.getElementById('wrongList').innerText = "";
-                // モードが「苦手問題」のままなら、「通常」に戻して全問表示する
                 if(mode === "review") {
-                    toggleMode();
-                } else {
-                    resetQuiz();
+                    mode = "normal";
+                    document.getElementById('modeName').innerText = "通常";
                 }
+                resetQuiz();
             }
         }
 
         function loadQuestion() {
-            // プールが空の時は、再セットしてから進める
             if (remainingPool.length === 0) {
                 alert("全ての問題が終了しました！最初からやり直します。");
                 resetQuiz();
-                return; // ここで一度抜けるのがポイント
+                return;
             }
 
             const q = remainingPool.pop(); 
             
             document.getElementById('remainingStats').innerText = `残り問題数: ${remainingPool.length + 1}問`;
             document.getElementById('genre').innerText = `【${q.ジャンル}】`;
-            document.getElementById('feature').innerText = q.特徴;
             document.getElementById('choices').innerHTML = '';
             document.getElementById('result').style.display = 'none';
 
-            let genreCandidates = quizData.filter(item => item.ジャンル === q.ジャンル).map(item => item.建築名);
-            let choices = [q.建築名];
+            // クイズ形式による表示切替
+            let correctValue = "";
+            if (quizType === "name") {
+                document.getElementById('nameModeArea').style.display = "block";
+                document.getElementById('featureModeArea').style.display = "none";
+                document.getElementById('feature').innerText = q.特徴;
+                if (q.画像) {
+                    document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
+                    document.getElementById('q-img').style.display = "block";
+                } else {
+                    document.getElementById('q-img').style.display = "none";
+                }
+                correctValue = q.建築名;
+            } else {
+                document.getElementById('nameModeArea').style.display = "none";
+                document.getElementById('featureModeArea').style.display = "block";
+                document.getElementById('question-title').innerText = q.建築名;
+                correctValue = q.特徴;
+            }
+
+            // 選択肢の生成（同じジャンルから4択）
+            let keyToMap = (quizType === "name") ? "建築名" : "特徴";
+            let genreCandidates = quizData.filter(item => item.ジャンル === q.ジャンル).map(item => item[keyToMap]);
+            let choices = [correctValue];
             while(choices.length < 4 && genreCandidates.length > choices.length) {
                 let cand = genreCandidates[Math.floor(Math.random() * genreCandidates.length)];
                 if(!choices.includes(cand)) choices.push(cand);
             }
             choices.sort(() => Math.random() - 0.5);
 
-            choices.forEach(name => {
+            choices.forEach(val => {
                 let btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.innerText = name;
+                btn.innerText = val;
                 btn.onclick = () => {
                     document.getElementById('result').style.display = 'block';
-                    document.getElementById('feedback').innerText = (name === q.建築名) ? "正解！" : "残念！正解は " + q.建築名;
+                    const isCorrect = (val === correctValue);
+                    document.getElementById('feedback').innerText = isCorrect ? "正解！" : "残念！正解は " + correctValue;
+                    document.getElementById('ansName').innerText = q.建築名;
                     document.getElementById('architect').innerText = q.建築家;
                     document.getElementById('explanation').innerText = q.解説;
-                    document.getElementById('q-img').src = `https://images.weserv.nl/?url=${q.画像.replace('raw.github.com', 'raw.githubusercontent.com')}&w=500`;
                     
-                    if (name !== q.建築名 && !wrongList.includes(q.建築名)) {
+                    if (!isCorrect && !wrongList.includes(q.建築名)) {
                         wrongList.push(q.建築名);
                         localStorage.setItem('wrongList', JSON.stringify(wrongList));
                     }
