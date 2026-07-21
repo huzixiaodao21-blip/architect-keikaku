@@ -10,8 +10,10 @@
         #q-img { max-width: 100%; display: block; margin: 15px 0; }
         .stats { font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
         .next-btn { background: #555; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 15px; }
+        .doubt-btn { background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 15px; }
         .control-panel { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
         #question-title { font-size: 24px; color: #333; margin: 15px 0; font-weight: bold; }
+        .list-box { font-size: 13px; color: #555; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -26,7 +28,7 @@
         <div class="stats" id="remainingStats"></div>
         <h3 id="genre">読み込み中...</h3>
         
-        <!-- 建築名当てモード用の表示（画像はここから排除） -->
+        <!-- 建築名当てモード用の表示 -->
         <div id="nameModeArea">
             <p><strong>特徴:</strong> <span id="feature"></span></p>
         </div>
@@ -42,21 +44,29 @@
         <div id="result" style="display:none; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
             <h2 id="feedback"></h2>
             <button class="next-btn" onclick="loadQuestion()">次の問題へ進む</button>
+            <!-- あやふやボタンを追加 -->
+            <button class="doubt-btn" onclick="markAsDoubt()">うわっ、あやふや…（リストに追加）</button>
+            
             <p><strong>建築名:</strong> <span id="ansName" style="font-weight:bold;"></span></p>
-            <!-- 画像は解説エリアに移動 -->
             <img id="q-img" src="">
             <p><strong>建築家:</strong> <span id="architect"></span></p>
             <p id="explanation"></p>
         </div>
     </div>
-    <p><small>間違えたリスト: <span id="wrongList"></span> <button onclick="clearWrongList()">リセット</button></small></p>
+    
+    <div class="list-box">
+        <p>❌ 間違えたリスト: <span id="wrongList"></span> <button onclick="clearList('wrong')">リセット</button></p>
+        <p>⚠️ あやふやリスト: <span id="doubtList"></span> <button onclick="clearList('doubt')">リセット</button></p>
+    </div>
 
     <script>
         let quizData = [];
         let remainingPool = [];
         let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
-        let mode = "normal"; 
-        let quizType = "name"; 
+        let doubtList = JSON.parse(localStorage.getItem('doubtList')) || [];
+        let mode = "normal"; // normal, review (間違えた), doubt (あやふや)
+        let quizType = "name"; // name or feature
+        let currentQ = null; // 現在の問題を保持
 
         fetch('計画-事例集.xlsx')
             .then(res => res.arrayBuffer())
@@ -75,41 +85,76 @@
         }
 
         function toggleMode() {
-            mode = (mode === "normal") ? "review" : "normal";
-            document.getElementById('modeName').innerText = (mode === "normal") ? "通常" : "苦手問題";
+            if (mode === "normal") {
+                mode = "review";
+                document.getElementById('modeName').innerText = "苦手問題";
+            } else if (mode === "review") {
+                mode = "doubt";
+                document.getElementById('modeName').innerText = "あやふや問題";
+            } else {
+                mode = "normal";
+                document.getElementById('modeName').innerText = "通常";
+            }
             resetQuiz();
         }
 
         function resetQuiz() {
             document.getElementById('result').style.display = 'none';
-            let filtered = (mode === "normal") ? [...quizData] : quizData.filter(q => wrongList.includes(q.建築名));
+            
+            let filtered = [...quizData];
+            if (mode === "review") {
+                filtered = quizData.filter(q => wrongList.includes(q.建築名));
+            } else if (mode === "doubt") {
+                filtered = quizData.filter(q => doubtList.includes(q.建築名));
+            }
+
             const selectedGenre = document.getElementById('genreSelect').value;
             if (selectedGenre !== "全て") filtered = filtered.filter(q => q.ジャンル === selectedGenre);
             
             remainingPool = filtered.sort(() => Math.random() - 0.5);
             
+            updateDisplayLists();
+
             if (remainingPool.length > 0) {
                 loadQuestion();
             } else {
                 document.getElementById('remainingStats').innerText = "問題がありません";
-                document.getElementById('genre').innerText = "問題を選択してください";
+                document.getElementById('genre').innerText = "該当する問題はありません";
                 document.getElementById('feature').innerText = "";
                 document.getElementById('question-title').innerText = "";
                 document.getElementById('choices').innerHTML = "";
             }
         }
 
-        function clearWrongList() {
-            if (confirm("間違えたリストを全てリセットしてもよろしいですか？")) {
-                wrongList = [];
-                localStorage.removeItem('wrongList');
-                document.getElementById('wrongList').innerText = "";
-                if(mode === "review") {
+        function clearList(type) {
+            if (confirm(type === 'wrong' ? "間違えたリストをリセットしますか？" : "あやふやリストをリセットしますか？")) {
+                if (type === 'wrong') {
+                    wrongList = [];
+                    localStorage.removeItem('wrongList');
+                } else {
+                    doubtList = [];
+                    localStorage.removeItem('doubtList');
+                }
+                if (mode === type || (type === 'wrong' && mode === "review") || (type === 'doubt' && mode === "doubt")) {
                     mode = "normal";
                     document.getElementById('modeName').innerText = "通常";
                 }
                 resetQuiz();
             }
+        }
+
+        function markAsDoubt() {
+            if (currentQ && !doubtList.includes(currentQ.建築名)) {
+                doubtList.push(currentQ.建築名);
+                localStorage.setItem('doubtList', JSON.stringify(doubtList));
+                updateDisplayLists();
+                alert("「あやふやリスト」に追加しました！");
+            }
+        }
+
+        function updateDisplayLists() {
+            document.getElementById('wrongList').innerText = wrongList.join(', ');
+            document.getElementById('doubtList').innerText = doubtList.join(', ');
         }
 
         function loadQuestion() {
@@ -119,7 +164,8 @@
                 return;
             }
 
-            const q = remainingPool.pop(); 
+            currentQ = remainingPool.pop(); 
+            const q = currentQ;
             
             document.getElementById('remainingStats').innerText = `残り問題数: ${remainingPool.length + 1}問`;
             document.getElementById('genre').innerText = `【${q.ジャンル}】`;
@@ -170,12 +216,12 @@
                     if (!isCorrect && !wrongList.includes(q.建築名)) {
                         wrongList.push(q.建築名);
                         localStorage.setItem('wrongList', JSON.stringify(wrongList));
+                        updateDisplayLists();
                     }
-                    document.getElementById('wrongList').innerText = wrongList.join(', ');
                 };
                 document.getElementById('choices').appendChild(btn);
             });
-            document.getElementById('wrongList').innerText = wrongList.join(', ');
+            updateDisplayLists();
         }
     </script>
 </body>
